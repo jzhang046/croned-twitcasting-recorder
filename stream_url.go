@@ -14,7 +14,7 @@ const (
 	apiEndpoint = "https://twitcasting.tv/streamserver.php"
 )
 
-func getStreamUrl(streamer string) string {
+func getStreamUrl(streamer string) (string, error) {
 	u, _ := url.Parse(apiEndpoint)
 	q := u.Query()
 	q.Set("target", streamer)
@@ -23,7 +23,7 @@ func getStreamUrl(streamer string) string {
 
 	response, err := http.Get(u.String())
 	if err != nil {
-		log.Fatal("HTTP request failed", err)
+		return "", fmt.Errorf("Requesting stream info for %s failed: %w", streamer, err)
 	}
 
 	responseData := map[string]interface{}{}
@@ -31,23 +31,45 @@ func getStreamUrl(streamer string) string {
 	dec.Decode(&responseData)
 	jq := jsonq.NewQuery(responseData)
 
-	isLive, err := jq.Bool("movie", "live")
-	if err != nil || !isLive {
-		log.Fatalf("Live stream of %s is offline", streamer)
+	if err := checkStreamOnline(jq); err != nil {
+		return "", err
 	}
 
 	// Try to get URL directly
-	if streamUrl, err := jq.String("llfmp4", "streams", "main"); err == nil {
-		return streamUrl
-	}
-	if streamUrl, err := jq.String("llfmp4", "streams", "mobilesource"); err == nil {
-		return streamUrl
-	}
-	if streamUrl, err := jq.String("llfmp4", "streams", "base"); err == nil {
-		return streamUrl
+	if streamUrl, err := getDirectStreamUrl(jq); err == nil {
+		return streamUrl, nil
 	}
 
-	log.Println("Stream URL not directly available in the API response; fallback to default URL")
+	log.Printf("Direct Stream URL for streamer [%s] not available in the API response; fallback to default URL\n", streamer)
+	return fallbackStreamUrl(jq, streamer)
+}
+
+func checkStreamOnline(jq *jsonq.JsonQuery) error {
+	isLive, err := jq.Bool("movie", "live")
+	if err != nil {
+		return fmt.Errorf("Error checking stream online status: %w", err)
+	} else if !isLive {
+		return fmt.Errorf("Live stream is offline")
+	}
+	return nil
+}
+
+func getDirectStreamUrl(jq *jsonq.JsonQuery) (string, error) {
+	// Try to get URL directly
+	if streamUrl, err := jq.String("llfmp4", "streams", "main"); err == nil {
+		return streamUrl, nil
+	}
+	if streamUrl, err := jq.String("llfmp4", "streams", "mobilesource"); err == nil {
+		return streamUrl, nil
+	}
+	if streamUrl, err := jq.String("llfmp4", "streams", "base"); err == nil {
+		return streamUrl, nil
+	}
+
+	return "", fmt.Errorf("Failed to get direct stream URL")
+}
+
+func fallbackStreamUrl(jq *jsonq.JsonQuery, streamer string) (string, error) {
 	mode := "base" // default mode
 	if isSource, err := jq.Bool("fmp4", "source"); err == nil && isSource {
 		mode = "main"
@@ -57,15 +79,18 @@ func getStreamUrl(streamer string) string {
 
 	protocal, err := jq.String("fmp4", "proto")
 	if err != nil {
-		log.Fatal("Failed to parse protocal", err)
+		return "", fmt.Errorf("Failed to parse stream protocal: %w", err)
 	}
+
 	host, err := jq.String("fmp4", "host")
 	if err != nil {
-		log.Fatal("Failed to parse host", err)
+		return "", fmt.Errorf("Failed to parse stream host: %w", err)
 	}
+
 	movieId, err := jq.String("movie", "id")
 	if err != nil {
-		log.Fatal("Failed to parse movie ID", err)
+		return "", fmt.Errorf("Failed to parse movie ID: %w", err)
 	}
-	return fmt.Sprintf("%s:%s/ws.app/stream/%s/fmp4/bd/1/1500?mode=%s", protocal, host, movieId, mode)
+
+	return fmt.Sprintf("%s:%s/ws.app/stream/%s/fmp4/bd/1/1500?mode=%s", protocal, host, movieId, mode), nil
 }
