@@ -2,6 +2,10 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+
+	"github.com/robfig/cron/v3"
 )
 
 const (
@@ -9,7 +13,23 @@ const (
 )
 
 func main() {
-	recordFunc(testStreamer)()
+	log.Println("croned recorder started ")
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
+	c := cron.New(cron.WithChain(
+		cron.Recover(cron.DefaultLogger),
+		cron.SkipIfStillRunning(cron.DefaultLogger),
+	))
+	c.AddFunc("@every 3m", recordFunc(testStreamer))
+	// Test
+	c.AddFunc("@every 5m", recordFunc("u1_8ra"))
+
+	c.Start()
+
+	<-interrupt
+	log.Println("Stopping")
 }
 
 func recordFunc(streamer string) func() {

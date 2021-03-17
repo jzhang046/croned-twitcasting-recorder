@@ -41,25 +41,24 @@ func record(streamer, streamUrl string, sinkChan chan<- []byte) {
 		go endRecord()
 	}
 	socket.OnConnected = func(socket gowebsocket.Socket) {
-		log.Println("Connected to server")
+		log.Printf("Connected to live stream for [%s], recording start \n", streamer)
 	}
 	socket.OnTextMessage = func(message string, socket gowebsocket.Socket) {
-		log.Println("Recieved message  " + message)
+		log.Println("Recieved message " + message)
 	}
 
 	socket.OnBinaryMessage = func(data []byte, socket gowebsocket.Socket) {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Printf("Unable to continue: ")
+				log.Printf("Unable to continue recording for [%s]: %s \n", streamer, r)
 				go endRecord()
 			}
 		}()
-		fmt.Print(".")
 		sinkChan <- data
 	}
 
 	socket.OnDisconnected = func(err error, socket gowebsocket.Socket) {
-		log.Println("Disconnected from server ")
+		log.Printf("Disconnected from live stream of [%s] \n", streamer)
 		go endRecord()
 		return
 	}
