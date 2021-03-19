@@ -8,28 +8,29 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-const (
-	testStreamer = "kaguramea_vov"
-)
-
 func main() {
 	log.Println("croned recorder started ")
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-
+	config := getDefaultConfig()
 	c := cron.New(cron.WithChain(
 		cron.Recover(cron.DefaultLogger),
 		cron.SkipIfStillRunning(cron.DefaultLogger),
 	))
-	c.AddFunc("@every 3m", recordFunc(testStreamer))
-	// Test
-	c.AddFunc("@every 5m", recordFunc("u1_8ra"))
+
+	for _, sc := range config.Streamers {
+		if _, err := c.AddFunc(sc.Schedule, recordFunc(sc.ScreenId)); err != nil {
+			log.Fatalln("Failed adding record schedule: ", err)
+		} else {
+			log.Printf("Added schedule [%s] for streamer [%s] \n", sc.Schedule, sc.ScreenId)
+		}
+	}
 
 	c.Start()
 
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, os.Kill)
 	<-interrupt
-	log.Println("Stopping")
+	log.Fatal("Terminated")
 }
 
 func recordFunc(streamer string) func() {
