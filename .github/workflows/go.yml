@@ -19,6 +19,8 @@ jobs:
     steps:
     - name: Check out source code 
       uses: actions/checkout@v2
+      with: 
+        ref: "${{ github.event.inputs.tag }}"
 
     - name: Set up Go
       uses: actions/setup-go@v2
