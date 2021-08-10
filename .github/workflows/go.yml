@@ -67,8 +67,5 @@ jobs:
       uses: softprops/action-gh-release@v1
       with: 
         prerelease: true
-        name: "${{ github.event.inputs.tag }}"
-        tag_name: "${{ github.event.inputs.tag }}"
-        files: |
-          config_example.yaml
-          croned-twitcasting-recorder_*_*
+        tag_name: "${{ github.ref }}"
+        files: bin/*
