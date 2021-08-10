@@ -1,14 +1,12 @@
 name: Release Artifacts
 
 on:
-  push:
-    tags: 
-      - "v*.*.*"
-  workflow_dispatch: 
-    inputs: 
-      tag: 
-        description: "Tag to build artifact" 
-        required: true
+  release: 
+    types: 
+      - created
+      - published
+      - released
+      - prereleased
 
 jobs:
   build:
@@ -20,7 +18,7 @@ jobs:
     - name: Check out source code 
       uses: actions/checkout@v2
       with: 
-        ref: "${{ github.event.inputs.tag }}"
+        ref: "${{ github.event.release.tag_name }}"
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -67,5 +65,6 @@ jobs:
       uses: softprops/action-gh-release@v1
       with: 
         prerelease: true
-        tag_name: "${{ github.ref }}"
+        name: "${{ github.event.release.name }}"
+        tag_name: "${{ github.event.release.tag_name }}"
         files: bin/*
