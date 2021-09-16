@@ -25,6 +25,7 @@ func getStreamUrl(streamer string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Requesting stream info for %s failed: %w", streamer, err)
 	}
+	defer response.Body.Close()
 
 	responseData := map[string]interface{}{}
 	dec := json.NewDecoder(response.Body)
