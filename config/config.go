@@ -20,7 +20,7 @@ func init() {
 
 type cronConfig struct {
 	Streamers []*struct {
-		ScreenId string `yaml:"screen_id" validate:"required"`
+		ScreenId string `yaml:"screen-id" validate:"required"`
 		Schedule string `yaml:"schedule" validate:"required"`
 	} `yaml:"streamers" validate:"min=1,dive"`
 }

@@ -33,9 +33,9 @@ go build -o bin/
   Multiple streamers could be specified with individual schedules. Status check and recording for different streamers would _not_ affect each other.  
 
   #### Field explanations: 
-  + `screen_id`:  
+  + `screen-id`:  
     Presented on the URL of the screamer's top page.  
-    Example: Top page URL of streamer [小野寺梓@真っ白なキャンバス](https://twitcasting.tv/azusa_shirokyan) is `https://twitcasting.tv/azusa_shirokyan`, the corresponding screen_id is `azusa_shirokyan`
+    Example: Top page URL of streamer [小野寺梓@真っ白なキャンバス](https://twitcasting.tv/azusa_shirokyan) is `https://twitcasting.tv/azusa_shirokyan`, the corresponding screen-id is `azusa_shirokyan`
   + `schedule`:   
     Please refer to the below docs for supported schedule definitions: 
     - https://pkg.go.dev/github.com/robfig/cron/v3#hdr-CRON_Expression_Format
@@ -44,5 +44,5 @@ go build -o bin/
 ---
 
 ### **Output**  
-  Output recording file would be put under the current directory, named after `screen_id-yyyyMMdd-HHmm.ts`  
+  Output recording file would be put under the current directory, named after `screen-id-yyyyMMdd-HHmm.ts`  
   For example, a recording starts at 15:04 on 2nd Jan 2006 of streamer [小野寺梓@真っ白なキャンバス](https://twitcasting.tv/azusa_shirokyan) would create recording file `azusa_shirokyan-20060102-1504.ts`
