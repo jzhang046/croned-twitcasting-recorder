@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"io/ioutil"
@@ -19,15 +19,13 @@ func init() {
 }
 
 type cronConfig struct {
-	Streamers []*streamerConfig `yaml:"streamers" validate:"min=1,dive"`
+	Streamers []*struct {
+		ScreenId string `yaml:"screen_id" validate:"required"`
+		Schedule string `yaml:"schedule" validate:"required"`
+	} `yaml:"streamers" validate:"min=1,dive"`
 }
 
-type streamerConfig struct {
-	ScreenId string `yaml:"screen_id" validate:"required"`
-	Schedule string `yaml:"schedule" validate:"required"`
-}
-
-func getDefaultConfig() *cronConfig {
+func GetDefaultConfig() *cronConfig {
 	cronConfig, err := parseConfig(defaultConfigPath)
 	if err != nil {
 		log.Fatal("Error parsing config file: \n", err)

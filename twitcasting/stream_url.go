@@ -1,4 +1,4 @@
-package main
+package twitcasting
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ const (
 	apiEndpoint = "https://twitcasting.tv/streamserver.php"
 )
 
-func getStreamUrl(streamer string) (string, error) {
+func GetWSStreamUrl(streamer string) (string, error) {
 	u, _ := url.Parse(apiEndpoint)
 	q := u.Query()
 	q.Set("target", streamer)

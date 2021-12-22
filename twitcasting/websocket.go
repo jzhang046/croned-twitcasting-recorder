@@ -1,4 +1,4 @@
-package main
+package twitcasting
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ const (
 	closeTimeout = 1 * time.Second
 )
 
-func record(streamer, streamUrl string, sinkChan chan<- []byte) {
+func RecordWS(streamer, streamUrl string, sinkChan chan<- []byte) {
 	recordEnded := make(chan bool)
 	endRecord := func() {
 		select {
