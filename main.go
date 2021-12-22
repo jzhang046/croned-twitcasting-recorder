@@ -24,7 +24,15 @@ func main() {
 	))
 
 	for _, streamerConfig := range config.Streamers {
-		if _, err := c.AddFunc(streamerConfig.Schedule, recordFunc(streamerConfig.ScreenId)); err != nil {
+		if _, err := c.AddFunc(
+			streamerConfig.Schedule,
+			record.ToRecordFunc(&record.RecordConfig{
+				Streamer:         streamerConfig.ScreenId,
+				StreamUrlFetcher: twitcasting.GetWSStreamUrl,
+				SinkProvider:     sink.NewFileSink,
+				StreamRecorder:   twitcasting.RecordWS,
+			}),
+		); err != nil {
 			log.Fatalln("Failed adding record schedule: ", err)
 		} else {
 			log.Printf("Added schedule [%s] for streamer [%s] \n", streamerConfig.Schedule, streamerConfig.ScreenId)
@@ -38,24 +46,4 @@ func main() {
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 	<-interrupt
 	log.Fatal("Terminated")
-}
-
-func recordFunc(streamer string) func() {
-	return func() {
-		streamUrl, err := twitcasting.GetWSStreamUrl(streamer)
-		if err != nil {
-			log.Printf("Error fetching stream URL for streamer [%s]: %v\n", streamer, err)
-			return
-		}
-		log.Printf("Fetched stream URL for streamer [%s]: %s\n", streamer, streamUrl)
-		recordContext, cancelRecord := record.NewRecordContext(streamer, streamUrl)
-
-		sinkChan, err := sink.NewFileSink(streamer, cancelRecord)
-		if err != nil {
-			log.Println("Error creating recording file: ", err)
-			return
-		}
-
-		twitcasting.RecordWS(recordContext, cancelRecord, sinkChan)
-	}
 }

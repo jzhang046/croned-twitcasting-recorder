@@ -27,7 +27,7 @@ const (
 	streamUrlKey = contextKey("streamUrl")
 )
 
-func NewRecordContext(streamer, streamUrl string) (RecordContext, context.CancelFunc) {
+func newRecordContext(streamer, streamUrl string) (RecordContext, context.CancelFunc) {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	ctx = context.WithValue(ctx, streamUrlKey, streamUrl)
 	ctx = context.WithValue(ctx, streamerKey, streamer)
