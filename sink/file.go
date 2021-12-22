@@ -1,6 +1,7 @@
 package sink
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -12,7 +13,7 @@ const (
 	sinkChanBuffer = 16
 )
 
-func NewFileSink(streamer string) (chan []byte, error) {
+func NewFileSink(streamer string, cancelRecord context.CancelFunc) (chan []byte, error) {
 	// If the file doesn't exist, create it, or append to the file
 	filename := fmt.Sprintf("%s-%s.ts", streamer, time.Now().Format(timeFormt))
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -30,7 +31,7 @@ func NewFileSink(streamer string) (chan []byte, error) {
 			if more {
 				if _, err := f.Write(data); err != nil {
 					log.Printf("Error writing recording file %s: %v\n", filename, err)
-					close(sinkChan)
+					cancelRecord()
 					return
 				}
 			} else {

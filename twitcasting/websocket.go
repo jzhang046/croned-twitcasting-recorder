@@ -6,10 +6,17 @@ import (
 	"log"
 
 	"github.com/sacOO7/gowebsocket"
+
+	"github.com/jzhang046/croned-twitcasting-recorder/record"
 )
 
-func RecordWS(streamer, streamUrl string, sinkChan chan<- []byte) {
-	socket := gowebsocket.New(streamUrl)
+func RecordWS(
+	recordContext record.RecordContext,
+	cancelRecord context.CancelFunc,
+	sinkChan chan<- []byte,
+) {
+	socket := gowebsocket.New(recordContext.GetStreamUrl())
+	streamer := recordContext.GetStreamer()
 
 	socket.ConnectionOptions = gowebsocket.ConnectionOptions{
 		// Proxy: gowebsocket.BuildProxy("http://example.com"),
@@ -20,8 +27,6 @@ func RecordWS(streamer, streamUrl string, sinkChan chan<- []byte) {
 
 	socket.RequestHeader.Set("Origin", fmt.Sprintf("https://twitcasting.tv/%s", streamer))
 	socket.RequestHeader.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36")
-
-	recordContext, cancelRecord := context.WithCancel(context.Background())
 
 	socket.OnConnectError = func(err error, socket gowebsocket.Socket) {
 		log.Println("Error connecting to stream URL: ", err)
@@ -35,12 +40,6 @@ func RecordWS(streamer, streamUrl string, sinkChan chan<- []byte) {
 	}
 
 	socket.OnBinaryMessage = func(data []byte, socket gowebsocket.Socket) {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("Unable to continue recording for [%s]: %s \n", streamer, r)
-				cancelRecord()
-			}
-		}()
 		sinkChan <- data
 	}
 

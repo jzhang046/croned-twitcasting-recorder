@@ -9,6 +9,7 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"github.com/jzhang046/croned-twitcasting-recorder/config"
+	"github.com/jzhang046/croned-twitcasting-recorder/record"
 	"github.com/jzhang046/croned-twitcasting-recorder/sink"
 	"github.com/jzhang046/croned-twitcasting-recorder/twitcasting"
 )
@@ -47,13 +48,14 @@ func recordFunc(streamer string) func() {
 			return
 		}
 		log.Printf("Fetched stream URL for streamer [%s]: %s\n", streamer, streamUrl)
+		recordContext, cancelRecord := record.NewRecordContext(streamer, streamUrl)
 
-		sinkChan, err := sink.NewFileSink(streamer)
+		sinkChan, err := sink.NewFileSink(streamer, cancelRecord)
 		if err != nil {
 			log.Println("Error creating recording file: ", err)
 			return
 		}
 
-		twitcasting.RecordWS(streamer, streamUrl, sinkChan)
+		twitcasting.RecordWS(recordContext, cancelRecord, sinkChan)
 	}
 }
