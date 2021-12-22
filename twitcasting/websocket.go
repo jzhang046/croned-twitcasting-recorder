@@ -1,29 +1,14 @@
 package twitcasting
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/sacOO7/gowebsocket"
 )
 
-const (
-	closeTimeout = 1 * time.Second
-)
-
 func RecordWS(streamer, streamUrl string, sinkChan chan<- []byte) {
-	recordEnded := make(chan bool)
-	endRecord := func() {
-		select {
-		case recordEnded <- true:
-			return
-		case <-time.After(closeTimeout):
-			return
-		}
-
-	}
-
 	socket := gowebsocket.New(streamUrl)
 
 	socket.ConnectionOptions = gowebsocket.ConnectionOptions{
@@ -36,9 +21,11 @@ func RecordWS(streamer, streamUrl string, sinkChan chan<- []byte) {
 	socket.RequestHeader.Set("Origin", fmt.Sprintf("https://twitcasting.tv/%s", streamer))
 	socket.RequestHeader.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36")
 
+	recordContext, cancelRecord := context.WithCancel(context.Background())
+
 	socket.OnConnectError = func(err error, socket gowebsocket.Socket) {
 		log.Println("Error connecting to stream URL: ", err)
-		go endRecord()
+		cancelRecord()
 	}
 	socket.OnConnected = func(socket gowebsocket.Socket) {
 		log.Printf("Connected to live stream for [%s], recording start \n", streamer)
@@ -51,7 +38,7 @@ func RecordWS(streamer, streamUrl string, sinkChan chan<- []byte) {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("Unable to continue recording for [%s]: %s \n", streamer, r)
-				go endRecord()
+				cancelRecord()
 			}
 		}()
 		sinkChan <- data
@@ -59,15 +46,14 @@ func RecordWS(streamer, streamUrl string, sinkChan chan<- []byte) {
 
 	socket.OnDisconnected = func(err error, socket gowebsocket.Socket) {
 		log.Printf("Disconnected from live stream of [%s] \n", streamer)
-		go endRecord()
-		return
+		cancelRecord()
 	}
 
 	socket.Connect()
 
-	<-recordEnded
+	// Waiting for context to finish
+	<-recordContext.Done()
 
-	// Clean up..
 	if socket.IsConnected {
 		socket.Close()
 	}
