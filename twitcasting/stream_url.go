@@ -23,7 +23,7 @@ func GetWSStreamUrl(streamer string) (string, error) {
 
 	response, err := http.Get(u.String())
 	if err != nil {
-		return "", fmt.Errorf("Requesting stream info for %s failed: %w", streamer, err)
+		return "", fmt.Errorf("requesting stream info for streamer [%s] failed: %w", streamer, err)
 	}
 	defer response.Body.Close()
 
@@ -48,9 +48,9 @@ func GetWSStreamUrl(streamer string) (string, error) {
 func checkStreamOnline(jq *jsonq.JsonQuery) error {
 	isLive, err := jq.Bool("movie", "live")
 	if err != nil {
-		return fmt.Errorf("Error checking stream online status: %w", err)
+		return fmt.Errorf("error checking stream online status: %w", err)
 	} else if !isLive {
-		return fmt.Errorf("Live stream is offline")
+		return fmt.Errorf("live stream is offline")
 	}
 	return nil
 }
@@ -67,7 +67,7 @@ func getDirectStreamUrl(jq *jsonq.JsonQuery) (string, error) {
 		return streamUrl, nil
 	}
 
-	return "", fmt.Errorf("Failed to get direct stream URL")
+	return "", fmt.Errorf("direct stream URL not available")
 }
 
 func fallbackStreamUrl(jq *jsonq.JsonQuery, streamer string) (string, error) {
@@ -80,17 +80,17 @@ func fallbackStreamUrl(jq *jsonq.JsonQuery, streamer string) (string, error) {
 
 	protocal, err := jq.String("fmp4", "proto")
 	if err != nil {
-		return "", fmt.Errorf("Failed to parse stream protocal: %w", err)
+		return "", fmt.Errorf("failed parsing stream protocal: %w", err)
 	}
 
 	host, err := jq.String("fmp4", "host")
 	if err != nil {
-		return "", fmt.Errorf("Failed to parse stream host: %w", err)
+		return "", fmt.Errorf("failed parsing stream host: %w", err)
 	}
 
 	movieId, err := jq.String("movie", "id")
 	if err != nil {
-		return "", fmt.Errorf("Failed to parse movie ID: %w", err)
+		return "", fmt.Errorf("failed parsing movie ID: %w", err)
 	}
 
 	return fmt.Sprintf("%s:%s/ws.app/stream/%s/fmp4/bd/1/1500?mode=%s", protocal, host, movieId, mode), nil
