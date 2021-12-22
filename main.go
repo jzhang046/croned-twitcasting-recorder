@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/robfig/cron/v3"
 
@@ -33,7 +34,7 @@ func main() {
 	log.Println("croned recorder started ")
 
 	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, os.Kill)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 	<-interrupt
 	log.Fatal("Terminated")
 }
