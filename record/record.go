@@ -10,6 +10,7 @@ type RecordConfig struct {
 	StreamUrlFetcher func(string) (string, error)
 	SinkProvider     func(string, context.CancelFunc) (chan<- []byte, error)
 	StreamRecorder   func(RecordContext, context.CancelFunc, chan<- []byte)
+	RootContext      context.Context
 }
 
 func ToRecordFunc(recordConfig *RecordConfig) func() {
@@ -21,7 +22,7 @@ func ToRecordFunc(recordConfig *RecordConfig) func() {
 			return
 		}
 		log.Printf("Fetched stream URL for streamer [%s]: %s\n", streamer, streamUrl)
-		recordContext, cancelRecord := newRecordContext(streamer, streamUrl)
+		recordContext, cancelRecord := newRecordContext(recordConfig.RootContext, streamer, streamUrl)
 
 		sinkChan, err := recordConfig.SinkProvider(streamer, cancelRecord)
 		if err != nil {
