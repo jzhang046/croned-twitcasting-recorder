@@ -1,20 +1,47 @@
 package twitcasting
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/jmoiron/jsonq"
 )
 
 const (
-	apiEndpoint = "https://twitcasting.tv/streamserver.php"
+	apiEndpoint    = "https://twitcasting.tv/streamserver.php"
+	requestTimeout = 4 * time.Second
 )
 
 func GetWSStreamUrl(streamer string) (string, error) {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancelCtx()
+
+	resultChan := make(chan string, 1)
+	errorChan := make(chan error, 1)
+	go func() {
+		if streamUrl, err := doGetWSStreamUrl(streamer); err == nil {
+			resultChan <- streamUrl
+		} else {
+			errorChan <- err
+		}
+	}()
+
+	select {
+	case streamerUrl := <-resultChan:
+		return streamerUrl, nil
+	case err := <-errorChan:
+		return "", err
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+func doGetWSStreamUrl(streamer string) (string, error) {
 	u, _ := url.Parse(apiEndpoint)
 	q := u.Query()
 	q.Set("target", streamer)
@@ -23,7 +50,7 @@ func GetWSStreamUrl(streamer string) (string, error) {
 
 	response, err := http.Get(u.String())
 	if err != nil {
-		return "", fmt.Errorf("requesting stream info for streamer [%s] failed: %w", streamer, err)
+		return "", fmt.Errorf("requesting stream info failed: %w", err)
 	}
 	defer response.Body.Close()
 
