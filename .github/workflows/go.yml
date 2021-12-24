@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env: 
       CGO_ENABLED: 0
     
@@ -56,9 +56,12 @@ jobs:
     - name: Copy example config 
       run: cp config_example.yaml bin/config_example.yaml
     
+    - name: Generate change log for release
+      run: ./changelog.sh '' '' --md > changelog.md
+
     - name: Release artifacts 
       uses: softprops/action-gh-release@v1
       with: 
         prerelease: true
         files: bin/*
-
+        body_path: changelog.md

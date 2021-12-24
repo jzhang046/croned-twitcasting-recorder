@@ -31,7 +31,7 @@ TYPES=(
 #* Types that will be displayed in their own section,
 #* in the order specified here.
 local -a MAIN_TYPES
-MAIN_TYPES=(feat fix perf docs)
+MAIN_TYPES=(feat fix perf docs ci)
 
 #* Types that will be displayed under the category of other changes
 local -a OTHER_TYPES
