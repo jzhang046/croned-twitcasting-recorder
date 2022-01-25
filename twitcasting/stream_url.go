@@ -1,7 +1,6 @@
 package twitcasting
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -15,40 +14,24 @@ import (
 const (
 	apiEndpoint    = "https://twitcasting.tv/streamserver.php"
 	requestTimeout = 4 * time.Second
+	userAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36"
 )
 
-func GetWSStreamUrl(streamer string) (string, error) {
-	ctx, cancelCtx := context.WithTimeout(context.Background(), requestTimeout)
-	defer cancelCtx()
-
-	resultChan := make(chan string, 1)
-	errorChan := make(chan error, 1)
-	go func() {
-		if streamUrl, err := doGetWSStreamUrl(streamer); err == nil {
-			resultChan <- streamUrl
-		} else {
-			errorChan <- err
-		}
-	}()
-
-	select {
-	case streamerUrl := <-resultChan:
-		return streamerUrl, nil
-	case err := <-errorChan:
-		return "", err
-	case <-ctx.Done():
-		return "", ctx.Err()
-	}
+var httpClient = &http.Client{
+	Timeout: requestTimeout,
 }
 
-func doGetWSStreamUrl(streamer string) (string, error) {
+func GetWSStreamUrl(streamer string) (string, error) {
 	u, _ := url.Parse(apiEndpoint)
 	q := u.Query()
 	q.Set("target", streamer)
 	q.Set("mode", "client")
 	u.RawQuery = q.Encode()
 
-	response, err := http.Get(u.String())
+	request, _ := http.NewRequest("GET", u.String(), nil)
+	request.UserAgent()
+	request.Header.Set("User-Agent", userAgent)
+	response, err := httpClient.Do(request)
 	if err != nil {
 		return "", fmt.Errorf("requesting stream info failed: %w", err)
 	}
