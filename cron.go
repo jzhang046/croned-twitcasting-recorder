@@ -15,7 +15,7 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-const terminationGracePeriodSeconds = 3
+const terminationGraceDuration = 3 * time.Second
 
 func recordCroned() {
 	log.Println("croned recorder starting ")
@@ -53,12 +53,12 @@ func recordCroned() {
 
 	<-interrupt
 
-	log.Printf("Terminating in %d seconds.. \n", terminationGracePeriodSeconds)
+	log.Printf("Terminating in %s.. \n", terminationGraceDuration)
 	go func() {
 		cancalAllRecords()
 		c.Stop()
 	}()
 
-	time.Sleep(terminationGracePeriodSeconds * time.Second)
+	time.Sleep(terminationGraceDuration)
 	log.Fatal("Terminated")
 }
