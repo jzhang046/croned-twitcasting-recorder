@@ -12,7 +12,10 @@ import (
 	"github.com/jzhang046/croned-twitcasting-recorder/twitcasting"
 )
 
-const DirectRecordCmdName = "direct"
+const (
+	DirectRecordCmdName = "direct"
+	retryBackoffPeriod  = 15 * time.Second
+)
 
 func RecordDirect(args []string) {
 	log.Printf("Starting in recoding mode [%s].. \n", DirectRecordCmdName)
@@ -35,33 +38,25 @@ func RecordDirect(args []string) {
 	}
 
 	rootCtx, cancelRecord := context.WithCancel(context.Background())
+	interrupted := waitForInterruput(cancelRecord)
 
-	done := make(chan struct{})
-
-	go func() {
-		for ; *retries >= 0; *retries-- {
-			select {
-			case <-rootCtx.Done():
-				return
-			default:
-				log.Printf("Recording streamer [%s] with [%d] retries left \n", *streamer, *retries)
-				record.ToRecordFunc(&record.RecordConfig{
-					Streamer:         *streamer,
-					StreamUrlFetcher: twitcasting.GetWSStreamUrl,
-					SinkProvider:     sink.NewFileSink,
-					StreamRecorder:   twitcasting.RecordWS,
-					RootContext:      rootCtx,
-				})()
-				time.Sleep(terminationGraceDuration)
-			}
+	for ; *retries >= 0; *retries-- {
+		select {
+		case <-rootCtx.Done():
+			<-interrupted
+			log.Fatal("Terminated on user interrupt")
+			return
+		default:
+			log.Printf("Recording streamer [%s] with [%d] retries left \n", *streamer, *retries)
+			record.ToRecordFunc(&record.RecordConfig{
+				Streamer:         *streamer,
+				StreamUrlFetcher: twitcasting.GetWSStreamUrl,
+				SinkProvider:     sink.NewFileSink,
+				StreamRecorder:   twitcasting.RecordWS,
+				RootContext:      rootCtx,
+			})()
+			time.Sleep(retryBackoffPeriod)
 		}
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		log.Println("Recording all completed")
-	case <-waitForInterruput(cancelRecord):
-		log.Fatal("Terminated on user interrupt")
 	}
+	log.Println("Recording all finished")
 }
