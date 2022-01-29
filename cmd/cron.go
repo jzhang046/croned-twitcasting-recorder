@@ -1,24 +1,21 @@
-package main
+package cmd
 
 import (
 	"context"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
+
+	"github.com/robfig/cron/v3"
 
 	"github.com/jzhang046/croned-twitcasting-recorder/config"
 	"github.com/jzhang046/croned-twitcasting-recorder/record"
 	"github.com/jzhang046/croned-twitcasting-recorder/sink"
 	"github.com/jzhang046/croned-twitcasting-recorder/twitcasting"
-	"github.com/robfig/cron/v3"
 )
 
-const terminationGraceDuration = 3 * time.Second
+const CronedRecordCmdName = "croned"
 
-func recordCroned() {
-	log.Println("croned recorder starting ")
+func RecordCroned() {
+	log.Printf("Starting in recoding mode [%s].. \n", CronedRecordCmdName)
 
 	config := config.GetDefaultConfig()
 	c := cron.New(cron.WithChain(
@@ -48,17 +45,10 @@ func recordCroned() {
 	c.Start()
 	log.Println("croned recorder started ")
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
-
-	<-interrupt
-
-	log.Printf("Terminating in %s.. \n", terminationGraceDuration)
-	go func() {
+	<-waitForInterruput(func() {
 		cancalAllRecords()
-		c.Stop()
-	}()
+		<-c.Stop().Done()
+	})
 
-	time.Sleep(terminationGraceDuration)
-	log.Fatal("Terminated")
+	log.Fatal("Terminated on user interrupt")
 }
