@@ -6,7 +6,7 @@ Checks the live status of streamers on twitcasting.tv automatically at scheduled
 ### **Disclaimer** 
 This application constantly calls unofficial, non-documented twitcasting API to fetch live stream status. Please note that: 
 * This application might not work in the future, subjecting to any change of twitcasting APIs 
-* Checking live stream status at high frequency might result in ban on twitcasting service, subjecting to twitcasting's terms and condition
+* Checking live stream status at high frequency might result in being banned from using twitcasting service, subjecting to twitcasting's terms and condition
 
 <span style="color:red">Please note the above and use this application at your own risk. </span>
 
@@ -17,13 +17,14 @@ This application constantly calls unofficial, non-documented twitcasting API to 
   Executables can be found on [release page](https://github.com/jzhang046/croned-twitcasting-recorder/releases). 
 * **Build from source**   
   Ensure that [golang is installed](https://golang.org/doc/install) on your system. 
-```Bash
-git clone https://github.com/jzhang046/croned-twitcasting-recorder && cd croned-twitcasting-recorder
-go build -o bin/
+  ```Bash
+  git clone https://github.com/jzhang046/croned-twitcasting-recorder && cd croned-twitcasting-recorder
+  go build -o ./bin/
 
-# Execute below command to start the recorder
-./bin/croned-twitcasting-recorder
-```
+  # Execute below command to start the recorder
+  ./bin/croned-twitcasting-recorder
+  ```
+
 
 ---
 
