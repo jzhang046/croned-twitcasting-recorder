@@ -50,28 +50,23 @@ func RecordDirect(args []string) {
 	interrupted := waitForInterruput(cancelRecord)
 
 	for ; *retries >= 0; *retries-- {
+		log.Printf(
+			"Recording streamer [%s] with [%d] retries left and [%s] backoff \n",
+			*streamer, *retries, *retryBackoffPeriod,
+		)
+		record.ToRecordFunc(&record.RecordConfig{
+			Streamer:         *streamer,
+			StreamUrlFetcher: twitcasting.GetWSStreamUrl,
+			SinkProvider:     sink.NewFileSink,
+			StreamRecorder:   twitcasting.RecordWS,
+			RootContext:      rootCtx,
+		})()
 		select {
+		// wait for either interrupted or retry backoff period
 		case <-rootCtx.Done():
 			<-interrupted
 			log.Fatal("Terminated on user interrupt")
-		default:
-			log.Printf(
-				"Recording streamer [%s] with [%d] retries left and [%s] backoff \n",
-				*streamer, *retries, *retryBackoffPeriod,
-			)
-			record.ToRecordFunc(&record.RecordConfig{
-				Streamer:         *streamer,
-				StreamUrlFetcher: twitcasting.GetWSStreamUrl,
-				SinkProvider:     sink.NewFileSink,
-				StreamRecorder:   twitcasting.RecordWS,
-				RootContext:      rootCtx,
-			})()
-			select {
-			// wait for either interrupted or retry backoff period
-			case <-interrupted:
-				log.Fatal("Terminated on user interrupt")
-			case <-time.After(*retryBackoffPeriod):
-			}
+		case <-time.After(*retryBackoffPeriod):
 		}
 	}
 	log.Println("Recording all finished")
