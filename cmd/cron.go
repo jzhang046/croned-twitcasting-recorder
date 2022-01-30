@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/robfig/cron/v3"
 
@@ -15,7 +16,7 @@ import (
 const CronedRecordCmdName = "croned"
 
 func RecordCroned() {
-	log.Printf("Starting in recoding mode [%s].. \n", CronedRecordCmdName)
+	log.Printf("Starting in recoding mode [%s] with PID [%d].. \n", CronedRecordCmdName, os.Getpid())
 
 	config := config.GetDefaultConfig()
 	c := cron.New(cron.WithChain(

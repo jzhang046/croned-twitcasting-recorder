@@ -18,7 +18,7 @@ const (
 )
 
 func RecordDirect(args []string) {
-	log.Printf("Starting in recoding mode [%s].. \n", DirectRecordCmdName)
+	log.Printf("Starting in recoding mode [%s] with PID [%d].. \n", DirectRecordCmdName, os.Getpid())
 
 	directRecordCmd := flag.NewFlagSet(DirectRecordCmdName, flag.ExitOnError)
 	streamer := directRecordCmd.String("streamer", "", "[required] streamer URL")
