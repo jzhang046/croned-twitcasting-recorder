@@ -20,16 +20,46 @@ This application constantly calls unofficial, non-documented twitcasting API to 
   ```Bash
   git clone https://github.com/jzhang046/croned-twitcasting-recorder && cd croned-twitcasting-recorder
   go build -o ./bin/
-
-  # Execute below command to start the recorder
-  ./bin/croned-twitcasting-recorder
+  # Executable: ./bin/croned-twitcasting-recorder
   ```
 
+--- 
+
+### **Usage** 
+* **Croned recording mode _(default)_**  
+  Please refer to [configuration](#configuration) section below to create configuration file. 
+  ```Bash
+  # Execute below command to start the recorder
+  ./bin/croned-twitcasting-recorder
+
+  # Or specify croned recording mode explicitly 
+  ./bin/croned-twitcasting-recorder croned
+  ```
+
+* **Direct recording mode**  
+  Direct recording mode supports recording to start immediately, with configurable number of retries and retry backoff period. 
+  ```Bash
+  # Start in direct recording mode  
+  ./bin/croned-twitcasting-recorder direct --streamer=${STREAMER_SCREEN_ID}
+  """
+  Usage of direct:
+  -retries int
+    	[optional] number of retries (default 0)
+  -retry-backoff duration
+    	[optional] retry backoff period (default 15s)
+  -streamer string
+    	[required] streamer URL
+  """
+  # Streamer URL must be supplied as argument 
+
+  # Example: 
+  ./bin/croned-twitcasting-recorder direct --streamer=azusa_shirokyan --retries=10 --retry-backoff=1m
+  ```
 
 ---
 
 ### **Configuration**
-  Configuration file `config.yaml` must be present on the current directory. Please see [config_example.yaml] for example format.  
+  Configuration file `config.yaml` must be present on the current directory under croned recording mode. Please see [config_example.yaml] for example format.  
   At least 1 streamer should be specified in `config.yaml`  
   Multiple streamers could be specified with individual schedules. Status check and recording for different streamers would _not_ affect each other.  
 
