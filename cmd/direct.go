@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	DirectRecordCmdName = "direct"
-	retryBackoffPeriod  = 15 * time.Second
+	DirectRecordCmdName       = "direct"
+	defaultRetryBackoffPeriod = 15 * time.Second
 )
 
 func RecordDirect(args []string) {
@@ -22,7 +22,16 @@ func RecordDirect(args []string) {
 
 	directRecordCmd := flag.NewFlagSet(DirectRecordCmdName, flag.ExitOnError)
 	streamer := directRecordCmd.String("streamer", "", "[required] streamer URL")
-	retries := directRecordCmd.Int("retries", 0, "[optional] number of retries, default 0")
+	retries := directRecordCmd.Int(
+		"retries",
+		0,
+		"[optional] number of retries (default 0)", //default will not be auto appended for 0 value
+	)
+	retryBackoffPeriod := directRecordCmd.Duration(
+		"retry-backoff",
+		defaultRetryBackoffPeriod,
+		"[optional] retry backoff period",
+	)
 
 	directRecordCmd.Parse(args)
 
@@ -47,7 +56,10 @@ func RecordDirect(args []string) {
 			log.Fatal("Terminated on user interrupt")
 			return
 		default:
-			log.Printf("Recording streamer [%s] with [%d] retries left \n", *streamer, *retries)
+			log.Printf(
+				"Recording streamer [%s] with [%d] retries left and [%s] backoff \n",
+				*streamer, *retries, *retryBackoffPeriod,
+			)
 			record.ToRecordFunc(&record.RecordConfig{
 				Streamer:         *streamer,
 				StreamUrlFetcher: twitcasting.GetWSStreamUrl,
