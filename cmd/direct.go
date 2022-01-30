@@ -67,7 +67,12 @@ func RecordDirect(args []string) {
 				StreamRecorder:   twitcasting.RecordWS,
 				RootContext:      rootCtx,
 			})()
-			time.Sleep(retryBackoffPeriod)
+			select {
+			// wait for either interrupted or retry backoff period
+			case <-interrupted:
+				log.Fatal("Terminated on user interrupt")
+			case <-time.After(*retryBackoffPeriod):
+			}
 		}
 	}
 	log.Println("Recording all finished")
