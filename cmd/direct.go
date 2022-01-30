@@ -54,7 +54,6 @@ func RecordDirect(args []string) {
 		case <-rootCtx.Done():
 			<-interrupted
 			log.Fatal("Terminated on user interrupt")
-			return
 		default:
 			log.Printf(
 				"Recording streamer [%s] with [%d] retries left and [%s] backoff \n",
