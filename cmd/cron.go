@@ -23,7 +23,7 @@ func RecordCroned() {
 		cron.SkipIfStillRunning(cron.DefaultLogger),
 	))
 
-	interruptCtx := newInterruptableCtx()
+	interruptCtx, afterGracefulInterrupt := newInterruptableCtx()
 
 	for _, streamerConfig := range config.Streamers {
 		if _, err := c.AddFunc(
@@ -45,8 +45,10 @@ func RecordCroned() {
 	c.Start()
 	log.Println("croned recorder started ")
 
+	// interrupt => stop cron and wait for all task to complete => wait for graceful interrupt
 	<-interruptCtx.Done()
 	<-c.Stop().Done()
+	<-afterGracefulInterrupt
 
 	log.Fatal("Terminated on user interrupt")
 }

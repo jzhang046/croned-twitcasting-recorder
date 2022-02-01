@@ -11,19 +11,22 @@ import (
 
 const terminationGraceDuration = 3 * time.Second
 
-func newInterruptableCtx() context.Context {
-	rootCtx, cancelFunc := context.WithCancel(context.Background())
-
+func newInterruptableCtx() (context.Context, <-chan struct{}) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	rootCtx, cancelOnInterrupt := context.WithCancel(context.Background())
+	afterGraceTermination := make(chan struct{})
 
 	go func() {
 		<-interrupt
 
 		log.Printf("Terminating in %s.. \n", terminationGraceDuration)
-		cancelFunc()
+		cancelOnInterrupt()
 		time.Sleep(terminationGraceDuration)
+
+		close(afterGraceTermination)
 	}()
 
-	return rootCtx
+	return rootCtx, afterGraceTermination
 }

@@ -45,7 +45,7 @@ func RecordDirect(args []string) {
 		os.Exit(1)
 	}
 
-	interruptCtx := newInterruptableCtx()
+	interruptCtx, afterGracefulInterrupt := newInterruptableCtx()
 
 	for ; *retries >= 0; *retries-- {
 		log.Printf(
@@ -62,6 +62,7 @@ func RecordDirect(args []string) {
 		select {
 		// wait for either interrupted or retry backoff period
 		case <-interruptCtx.Done():
+			<-afterGracefulInterrupt
 			log.Fatal("Terminated on user interrupt")
 		case <-time.After(*retryBackoffPeriod):
 		}
