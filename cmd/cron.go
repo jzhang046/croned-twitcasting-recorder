@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"log"
 	"os"
 
@@ -24,7 +23,7 @@ func RecordCroned() {
 		cron.SkipIfStillRunning(cron.DefaultLogger),
 	))
 
-	rootCtx, cancalAllRecords := context.WithCancel(context.Background())
+	interruptCtx := newInterruptableCtx()
 
 	for _, streamerConfig := range config.Streamers {
 		if _, err := c.AddFunc(
@@ -34,7 +33,7 @@ func RecordCroned() {
 				StreamUrlFetcher: twitcasting.GetWSStreamUrl,
 				SinkProvider:     sink.NewFileSink,
 				StreamRecorder:   twitcasting.RecordWS,
-				RootContext:      rootCtx,
+				RootContext:      interruptCtx,
 			}),
 		); err != nil {
 			log.Fatalln("Failed adding record schedule: ", err)
@@ -46,10 +45,8 @@ func RecordCroned() {
 	c.Start()
 	log.Println("croned recorder started ")
 
-	<-waitForInterruput(func() {
-		cancalAllRecords()
-		<-c.Stop().Done()
-	})
+	<-interruptCtx.Done()
+	<-c.Stop().Done()
 
 	log.Fatal("Terminated on user interrupt")
 }

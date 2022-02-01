@@ -11,21 +11,19 @@ import (
 
 const terminationGraceDuration = 3 * time.Second
 
-func waitForInterruput(cancelFunc context.CancelFunc) <-chan struct{} {
+func newInterruptableCtx() context.Context {
+	rootCtx, cancelFunc := context.WithCancel(context.Background())
+
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
-
-	interrupted := make(chan struct{})
 
 	go func() {
 		<-interrupt
 
 		log.Printf("Terminating in %s.. \n", terminationGraceDuration)
-		go cancelFunc()
-
+		cancelFunc()
 		time.Sleep(terminationGraceDuration)
-		close(interrupted)
 	}()
 
-	return interrupted
+	return rootCtx
 }

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"flag"
 	"log"
 	"os"
@@ -46,8 +45,7 @@ func RecordDirect(args []string) {
 		os.Exit(1)
 	}
 
-	rootCtx, cancelRecord := context.WithCancel(context.Background())
-	interrupted := waitForInterruput(cancelRecord)
+	interruptCtx := newInterruptableCtx()
 
 	for ; *retries >= 0; *retries-- {
 		log.Printf(
@@ -59,12 +57,11 @@ func RecordDirect(args []string) {
 			StreamUrlFetcher: twitcasting.GetWSStreamUrl,
 			SinkProvider:     sink.NewFileSink,
 			StreamRecorder:   twitcasting.RecordWS,
-			RootContext:      rootCtx,
+			RootContext:      interruptCtx,
 		})()
 		select {
 		// wait for either interrupted or retry backoff period
-		case <-rootCtx.Done():
-			<-interrupted
+		case <-interruptCtx.Done():
 			log.Fatal("Terminated on user interrupt")
 		case <-time.After(*retryBackoffPeriod):
 		}
