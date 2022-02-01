@@ -1,7 +1,6 @@
 package twitcasting
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -10,13 +9,9 @@ import (
 	"github.com/jzhang046/croned-twitcasting-recorder/record"
 )
 
-func RecordWS(
-	recordContext record.RecordContext,
-	cancelRecord context.CancelFunc,
-	sinkChan chan<- []byte,
-) {
-	socket := gowebsocket.New(recordContext.GetStreamUrl())
-	streamer := recordContext.GetStreamer()
+func RecordWS(recordCtx record.RecordContext, sinkChan chan<- []byte) {
+	socket := gowebsocket.New(recordCtx.GetStreamUrl())
+	streamer := recordCtx.GetStreamer()
 
 	socket.ConnectionOptions = gowebsocket.ConnectionOptions{
 		// Proxy: gowebsocket.BuildProxy("http://example.com"),
@@ -30,13 +25,13 @@ func RecordWS(
 
 	socket.OnConnectError = func(err error, socket gowebsocket.Socket) {
 		log.Println("Error connecting to stream URL: ", err)
-		cancelRecord()
+		recordCtx.Cancel()
 	}
 	socket.OnConnected = func(socket gowebsocket.Socket) {
 		log.Printf("Connected to live stream for [%s], recording start \n", streamer)
 	}
 	socket.OnTextMessage = func(message string, socket gowebsocket.Socket) {
-		log.Println("Recieved message " + message)
+		log.Println("Recieved message", message)
 	}
 
 	socket.OnBinaryMessage = func(data []byte, socket gowebsocket.Socket) {
@@ -45,13 +40,13 @@ func RecordWS(
 
 	socket.OnDisconnected = func(err error, socket gowebsocket.Socket) {
 		log.Printf("Disconnected from live stream of [%s] \n", streamer)
-		cancelRecord()
+		recordCtx.Cancel()
 	}
 
 	socket.Connect()
 
 	// Waiting for context to finish
-	<-recordContext.Done()
+	<-recordCtx.Done()
 
 	if socket.IsConnected {
 		socket.Close()

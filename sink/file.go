@@ -1,11 +1,12 @@
 package sink
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
 	"time"
+
+	"github.com/jzhang046/croned-twitcasting-recorder/record"
 )
 
 const (
@@ -13,9 +14,9 @@ const (
 	sinkChanBuffer = 16
 )
 
-func NewFileSink(streamer string, cancelRecord context.CancelFunc) (chan<- []byte, error) {
+func NewFileSink(recordCtx record.RecordContext) (chan<- []byte, error) {
 	// If the file doesn't exist, create it, or append to the file
-	filename := fmt.Sprintf("%s-%s.ts", streamer, time.Now().Format(timeFormt))
+	filename := fmt.Sprintf("%s-%s.ts", recordCtx.GetStreamer(), time.Now().Format(timeFormt))
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, err
@@ -31,7 +32,7 @@ func NewFileSink(streamer string, cancelRecord context.CancelFunc) (chan<- []byt
 			if more {
 				if _, err := f.Write(data); err != nil {
 					log.Printf("Error writing recording file %s: %v\n", filename, err)
-					cancelRecord()
+					recordCtx.Cancel()
 					return
 				}
 			} else {

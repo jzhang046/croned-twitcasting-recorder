@@ -9,6 +9,9 @@ type RecordContext interface {
 	// explains the reason that the context is Done()
 	Err() error
 
+	// cancel the record
+	Cancel()
+
 	// get stream URL from this context
 	GetStreamUrl() string
 
@@ -17,7 +20,8 @@ type RecordContext interface {
 }
 
 type recordContextImpl struct {
-	ctx context.Context
+	ctx        context.Context
+	cancelFunc context.CancelFunc
 }
 
 type contextKey string
@@ -27,11 +31,11 @@ const (
 	streamUrlKey = contextKey("streamUrl")
 )
 
-func newRecordContext(ctx context.Context, streamer, streamUrl string) (RecordContext, context.CancelFunc) {
+func newRecordContext(ctx context.Context, streamer, streamUrl string) RecordContext {
 	ctx, cancelFunc := context.WithCancel(ctx)
 	ctx = context.WithValue(ctx, streamUrlKey, streamUrl)
 	ctx = context.WithValue(ctx, streamerKey, streamer)
-	return &recordContextImpl{ctx}, cancelFunc
+	return &recordContextImpl{ctx, cancelFunc}
 }
 
 func (ctxImpl *recordContextImpl) Done() <-chan struct{} {
@@ -40,6 +44,10 @@ func (ctxImpl *recordContextImpl) Done() <-chan struct{} {
 
 func (ctxImpl *recordContextImpl) Err() error {
 	return ctxImpl.ctx.Err()
+}
+
+func (ctxImpl *recordContextImpl) Cancel() {
+	ctxImpl.cancelFunc()
 }
 
 func (ctxImpl *recordContextImpl) GetStreamUrl() string {

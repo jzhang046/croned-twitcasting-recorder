@@ -8,8 +8,8 @@ import (
 type RecordConfig struct {
 	Streamer         string
 	StreamUrlFetcher func(string) (string, error)
-	SinkProvider     func(string, context.CancelFunc) (chan<- []byte, error)
-	StreamRecorder   func(RecordContext, context.CancelFunc, chan<- []byte)
+	SinkProvider     func(RecordContext) (chan<- []byte, error)
+	StreamRecorder   func(RecordContext, chan<- []byte)
 	RootContext      context.Context
 }
 
@@ -22,14 +22,14 @@ func ToRecordFunc(recordConfig *RecordConfig) func() {
 			return
 		}
 		log.Printf("Fetched stream URL for streamer [%s]: %s\n", streamer, streamUrl)
-		recordContext, cancelRecord := newRecordContext(recordConfig.RootContext, streamer, streamUrl)
+		recordCtx := newRecordContext(recordConfig.RootContext, streamer, streamUrl)
 
-		sinkChan, err := recordConfig.SinkProvider(streamer, cancelRecord)
+		sinkChan, err := recordConfig.SinkProvider(recordCtx)
 		if err != nil {
 			log.Println("Error creating recording file: ", err)
 			return
 		}
 
-		recordConfig.StreamRecorder(recordContext, cancelRecord, sinkChan)
+		recordConfig.StreamRecorder(recordCtx, sinkChan)
 	}
 }
