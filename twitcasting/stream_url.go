@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	apiEndpoint    = "https://twitcasting.tv/streamserver.php"
+	baseDomain     = "https://twitcasting.tv"
+	apiEndpoint    = baseDomain + "/streamserver.php"
 	requestTimeout = 4 * time.Second
 	userAgent      = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36"
 )
@@ -31,7 +32,7 @@ func GetWSStreamUrl(streamer string) (string, error) {
 	request, _ := http.NewRequest("GET", u.String(), nil)
 	request.UserAgent()
 	request.Header.Set("User-Agent", userAgent)
-	request.Header.Set("Referer", fmt.Sprintf("https://twitcasting.tv/%s", streamer))
+	request.Header.Set("Referer", fmt.Sprint(baseDomain, "/", streamer))
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return "", fmt.Errorf("requesting stream info failed: %w", err)

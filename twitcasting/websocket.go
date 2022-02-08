@@ -1,7 +1,6 @@
 package twitcasting
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/sacOO7/gowebsocket"
@@ -20,7 +19,7 @@ func RecordWS(recordCtx record.RecordContext, sinkChan chan<- []byte) {
 		// Subprotocols:   []string{"chat", "superchat"},
 	}
 
-	socket.RequestHeader.Set("Origin", fmt.Sprintf("https://twitcasting.tv/%s", streamer))
+	socket.RequestHeader.Set("Origin", baseDomain)
 	socket.RequestHeader.Set("User-Agent", userAgent)
 
 	socket.OnConnectError = func(err error, socket gowebsocket.Socket) {
