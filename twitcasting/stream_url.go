@@ -31,6 +31,7 @@ func GetWSStreamUrl(streamer string) (string, error) {
 	request, _ := http.NewRequest("GET", u.String(), nil)
 	request.UserAgent()
 	request.Header.Set("User-Agent", userAgent)
+	request.Header.Set("Referer", fmt.Sprintf("https://twitcasting.tv/%s", streamer))
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return "", fmt.Errorf("requesting stream info failed: %w", err)
