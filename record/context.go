@@ -3,19 +3,19 @@ package record
 import "context"
 
 type RecordContext interface {
-	// closed when work done
+	// Done would be closed when work done.
 	Done() <-chan struct{}
 
-	// explains the reason that the context is Done()
+	// Err explains the reason when this context is Done().
 	Err() error
 
-	// cancel the record
+	// Cancel cancels the record.
 	Cancel()
 
-	// get stream URL from this context
+	// GetStreamUrl returns the stream URL of this context.
 	GetStreamUrl() string
 
-	// get streamer's screen ID from this context
+	// GetStreamer returns streamer's screen ID of this context.
 	GetStreamer() string
 }
 

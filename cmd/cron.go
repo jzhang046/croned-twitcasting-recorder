@@ -17,7 +17,7 @@ const CronedRecordCmdName = "croned"
 func RecordCroned() {
 	log.Printf("Starting in recoding mode [%s] with PID [%d].. \n", CronedRecordCmdName, os.Getpid())
 
-	config := config.GetDefaultConfig()
+	cfg := config.GetDefaultConfig()
 	c := cron.New(cron.WithChain(
 		cron.Recover(cron.DefaultLogger),
 		cron.SkipIfStillRunning(cron.DefaultLogger),
@@ -25,7 +25,7 @@ func RecordCroned() {
 
 	interruptCtx, afterGracefulInterrupt := newInterruptableCtx()
 
-	for _, streamerConfig := range config.Streamers {
+	for _, streamerConfig := range cfg.Streamers {
 		if _, err := c.AddFunc(
 			streamerConfig.Schedule,
 			record.ToRecordFunc(&record.RecordConfig{

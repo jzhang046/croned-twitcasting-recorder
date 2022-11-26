@@ -30,7 +30,7 @@ func RecordWS(recordCtx record.RecordContext, sinkChan chan<- []byte) {
 		log.Printf("Connected to live stream for [%s], recording start \n", streamer)
 	}
 	socket.OnTextMessage = func(message string, socket gowebsocket.Socket) {
-		log.Println("Recieved message", message)
+		log.Println("Received message", message)
 	}
 
 	socket.OnBinaryMessage = func(data []byte, socket gowebsocket.Socket) {
