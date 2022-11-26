@@ -59,7 +59,7 @@ jobs:
       run: cp config_example.yaml bin/config_example.yaml
     
     - name: Generate change log for release
-      run: ./changelog.sh '' '' --md > changelog.md
+      run: curl -sSf 'https://raw.githubusercontent.com/jzhang046/croned-twitcasting-recorder/v2.1.1/changelog.sh' | zsh -s -- '' '' --md > changelog.md
 
     - name: Release artifacts 
       uses: softprops/action-gh-release@v1
